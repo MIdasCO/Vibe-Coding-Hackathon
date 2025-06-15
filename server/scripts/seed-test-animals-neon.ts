@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import ws from "ws";
 import * as schema from '@shared/schema';
 import { config } from 'dotenv';
+import bcrypt from 'bcrypt';
 
 // Загружаем переменные окружения из .env файла
 config({ override: true });
@@ -41,15 +42,22 @@ async function seedTestAnimalsNeon() {
         testUser = existingUsers[0];
         console.log(`👤 Используем существующего пользователя: ${testUser.email}`);
       } else {
-        const newUsers = await db.insert(schema.users).values({
-          email: 'test@example.com',
-          firstName: 'Тестовый',
-          lastName: 'Пользователь',
-          phone: '+996700123456',
-          password: 'test_hash',
-          isVerified: true,
-        }).returning();
-        testUser = newUsers[0];
+        const [user] = await db
+          .insert(schema.users)
+          .values({
+            email: 'test@example.com',
+            password: await bcrypt.hash('password123', 10),
+            firstName: 'Test',
+            lastName: 'User',
+            phone: '+996555123456',
+            isVerified: true,
+            isAdmin: true,
+            regionId: 1,
+            cityId: 1,
+            balance: '0.00'
+          })
+          .returning();
+        testUser = user;
         console.log(`👤 Создан тестовый пользователь: ${testUser.email}`);
       }
     } catch (error) {
