@@ -18,23 +18,13 @@ async function fixCategories() {
 
     // Обновляем типы домашних животных
     console.log('📝 Обновляем типы домашних животных...');
-    const petTypes = await db
+    const petTypes = ['Dog', 'Cat', 'Bird', 'Rabbit', 'Hamster', 'Fish'];
+    const petsResult = await db
       .update(animalTypes)
-      .set({ category: 'pets' })
-      .where(inArray(animalTypes.name, ['Dog', 'Cat', 'Bird', 'Rabbit', 'Hamster', 'Fish']))
-      .returning();
+      .set({ category: 'pets' as const })
+      .where(inArray(animalTypes.name, petTypes));
     
-    console.log(`✅ Обновлено ${petTypes.length} типов домашних животных`);
-
-    // Обновляем типы сельскохозяйственных животных
-    console.log('📝 Обновляем типы сельскохозяйственных животных...');
-    const livestockTypes = await db
-      .update(animalTypes)
-      .set({ category: 'livestock' })
-      .where(inArray(animalTypes.name, ['Cattle', 'Sheep', 'Goats', 'Horses', 'Pigs', 'Poultry']))
-      .returning();
-    
-    console.log(`✅ Обновлено ${livestockTypes.length} типов сельскохозяйственных животных`);
+    console.log(`✅ Обновлено ${petsResult.rowCount || 0} типов домашних животных`);
 
     // Получаем ID типов домашних животных
     const petTypeIds = await db
@@ -53,6 +43,15 @@ async function fixCategories() {
       
       console.log(`✅ Обновлено ${updatedPets.length} домашних животных`);
     }
+
+    // Определяем типы скота
+    const livestockTypes = ['Cattle', 'Sheep', 'Goats', 'Horses', 'Pigs', 'Poultry'];
+    
+    console.log('🐄 Обновляем типы скота...');
+    const livestockResult = await db
+      .update(animalTypes)
+      .set({ category: 'livestock' as const })
+      .where(inArray(animalTypes.name, livestockTypes));
 
     // Получаем ID типов сельскохозяйственных животных
     const livestockTypeIds = await db
