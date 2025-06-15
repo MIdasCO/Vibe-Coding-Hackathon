@@ -1,0 +1,27 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Region {
+  id      Int     @id @default(autoincrement())
+  name    String  @unique
+  nameRu  String?
+  nameKg  String?
+  cities  City[]
+}
+
+model City {
+  id       Int     @id @default(autoincrement())
+  name     String
+  nameRu   String?
+  nameKg   String?
+  region   Region  @relation(fields: [regionId], references: [id])
+  regionId Int
+
+  @@unique([name, regionId])
+} 

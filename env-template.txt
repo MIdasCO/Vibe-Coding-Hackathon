@@ -1,0 +1,20 @@
+# Скопируйте этот файл в .env и настройте переменные
+
+# База данных Neon PostgreSQL
+DATABASE_URL="postgresql://neondb_owner:npg_SLY3h9DnxREw@ep-plain-night-a8ck81wi-pooler.eastus2.azure.neon.tech/neondb?sslmode=require"
+
+# Настройки сервера
+NODE_ENV=development
+PORT=5000
+
+# Секретный ключ для сессий (замените на свой безопасный ключ)
+SESSION_SECRET="your-super-secret-session-key-here-change-this-in-production"
+
+# URL API для фронтенда
+VITE_API_URL=http://localhost:5000
+
+# Настройки для разработки
+DEBUG=true
+
+# Настройки для Vercel (только для production)
+# VERCEL=1 

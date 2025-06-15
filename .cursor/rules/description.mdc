@@ -1,0 +1,294 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Detailed Functional Specification of Skot.kg Platform
+Skot.kg is a comprehensive digital ecosystem designed for the livestock market in Kyrgyzstan, similar to well-known automotive sales platforms, but specifically focused on livestock and related services. The platform aims to simplify buying and selling processes, ensure transparency, and provide all necessary tools for market participants.
+
+1. User and Account Management
+This section describes the login, registration, and personal profile management processes, which form the foundation for user interaction with the platform.
+
+1.1. Simple and Flexible Registration:
+
+User Scenario: A new user lands on the skot.kg/register page. They are presented with options for account creation designed to minimize effort.
+Registration Options:
+Via Email: The user enters an email address and desired password (with confirmation). The system sends a verification email to the specified address with a unique clickable link. The account is activated only after confirmation via the link.
+Via Phone Number: The user enters their phone number. An SMS containing a One-Time Password (OTP) is sent to the specified number. The user enters the OTP on the site for verification and then sets a password.
+Via Social Networks (Google/Facebook): The user clicks the corresponding button. They are redirected to the selected social network's authentication page. After successful authorization, the platform receives basic profile data (email, name), and an account is automatically created.
+Value: Low entry barrier, offering a choice of convenient registration methods, increasing trust through contact verification.
+Technical Implementation:
+FastAPI: Handles registration requests, hashes passwords (using passlib and bcrypt, for example), integrates with email sending services (SendGrid, Mailgun) and SMS gateways (Twilio) for verification, implements the OAuth2 flow for social logins, and saves data to the users table.
+React: Provides intuitive data input forms and social media buttons. Performs client-side validation of fields (email/number format, password matching) before sending data to the backend.
+1.2. Login System (Authorization):
+
+User Scenario: A registered user lands on the skot.kg/login page.
+Login Methods:
+Login using Email/Phone number and password.
+Login via social networks (if the account was registered that way).
+Password Recovery: The "Forgot password?" function initiates a recovery process via email or SMS, similar to verification.
+Value: Secure and convenient access to the personal account and personalized features.
+Technical Implementation:
+FastAPI: Validates credentials, generates JWT tokens upon successful authorization (stored as access_token and refresh_token), which are used for authenticating subsequent requests.
+React: Sends credentials to the backend, stores the received JWT tokens (e.g., in localStorage or cookies), and uses them for protected API requests.
+1.3. User Personal Account:
+
+User Scenario: After logging in, the user accesses their personal account, available at /profile or via a user icon in the header.
+Overview Page (Dashboard): Provides a brief summary: number of active/inactive ads, unread messages, current balance, latest notifications.
+Personal Account Sub-sections:
+1.3.1. My Listings:
+Functionality: Displays a complete list of all listings posted by the current user (both animal and service listings).
+Display: Each listing entry includes: Title, main photo (or icon for services), current status (Active, Inactive, Sold, Moderation, Rejected), publication date, view count.
+Listing Actions:
+"Edit": Redirects to an editing form where the user can update any information, photos, videos, or documents.
+"Deactivate": Changes the listing status to "inactive." The listing stops appearing in public searches but remains in the personal account. Used when an animal is temporarily unavailable or the seller wants to withdraw it from sale.
+"Activate": Changes the listing status from "inactive" back to "active," returning it to the public catalog.
+"Mark as Sold": Changes the listing status to "sold." It is removed from active search but may remain visible in an archive with a "Sold" tag.
+"Delete": After confirmation, the listing is deleted (soft deletion is preferred initially – marking the listing as deleted but retaining data for statistics and moderation).
+"Promote": Opens a window or redirects to a page with options for paid promotion (boosting in search, highlighting).
+Filtering/Sorting: Within the "My Listings" section, listings can be filtered by status, listing type (animal/service), publication date, and sorted by various parameters.
+1.3.2. Favorite Listings:
+Functionality: A list of all animal listings (and potentially service listings) the user has favorited.
+Display: Brief information for each favorite listing (title, main photo, price, seller, location).
+Actions: "View Listing" (navigates to the full listing page), "Remove from Favorites."
+1.3.3. Balance:
+Functionality: Displays the user's current numerical balance on the platform.
+"Top Up Balance" button: Initiates the online payment process through a payment system.
+Transaction History: A detailed list of all debits and credits with timestamps, amounts, and descriptions (e.g., "Balance Top-Up," "Payment for 'Pedigree Bull' Listing Promotion").
+1.3.4. Profile Settings:
+Data Editing: Fields to change full name, contact email (possibly requiring re-verification if changed), phone number (with verification), region, and city.
+Password Change: A form to change the current password.
+Notification Preferences: Checkboxes or toggles to manage receipt of email notifications (e.g., new messages, listing status changes, new listings matching saved searches).
+Value: Empowers users to manage their presence and activities effectively, provides transparency on financial aspects, and allows customization of interaction.
+Technical Implementation:
+React: Renders all personal account sections dynamically using components. Handles user input in forms and sends requests to the backend.
+FastAPI: Provides secure API endpoints for fetching user-specific data (listings, favorites, transactions), updating profiles, and processing status changes. All business logic for status changes, balance checks, and form processing is implemented on the backend.
+2. Animal Listing Catalog
+The core of the platform, enabling efficient search and display of animals.
+
+2.1. Detailed Listing Submission (by Seller):
+
+User Scenario: A seller navigates to "Personal Account" -> "My Listings" -> "Submit New Listing."
+Listing Creation Form: A multi-step or single intuitive form with helpful prompts.
+Title: A concise, informative title (e.g., "For Sale: Young Jersey Cow").
+Description: A spacious text area for a detailed description of the animal: history, characteristics, productivity, temperament, living conditions, reason for sale.
+Animal Type Selection: A dropdown list (data from animal_types).
+Breed Selection: A dynamically loaded dropdown list of breeds, dependent on the selected animal type (data from breeds).
+Gender: Selection from 'male' / 'female'.
+Birth Year: Selection of year or exact birth date.
+Color (Coat): Text field or dropdown for common coat colors.
+Approximate Weight: Numeric input (kg).
+Purpose: Selection from 'breeding', 'dairy', 'meat', 'for reproduction', etc.
+Price: Numeric field, with an "negotiable price" option (checkbox is_negotiable).
+Location: Selection of region from a list (regions.id), then city from a list dependent on the selected region (cities.id).
+Photo Upload: Multi-file selection, preview, ability to choose a main photo. Minimum/maximum number of photos.
+Video Upload: Ability to upload one or more video files (or links to YouTube/Vimeo).
+Document Upload: Fields for uploading scans/photos of animal passports, veterinary certificates, pedigree certificates. Mark for document verification after moderation.
+Preview: Ability to see how the listing will look before publication.
+Moderation: All new listings undergo moderation before publication (automated keyword checks + manual review). The status changes to "Moderation."
+Value: Maximum information in listings, which increases buyer trust and speeds up sales. Convenience for the seller.
+Technical Implementation:
+React: Creates a multi-step or dynamic form with real-time validation. Uses API to load reference data (animal_types, breeds, regions, cities). Sends form data and media files to the backend.
+FastAPI: Receives listing data, performs server-side validation, saves text data to animals, file information to animal_photos, animal_videos, animal_documents. Implements moderation logic, possibly with background tasks (e.g., Celery for video processing or sending notifications to moderators).
+2.2. Advanced Search and Filtering (for Buyers):
+
+User Scenario: A buyer visits the homepage or catalog page (skot.kg/animals).
+Search Bar: Keyword search within listing titles and descriptions.
+Filters:
+Geography: Region, city (cascading dropdowns).
+Animal Type: Selection from animal_types.
+Breed: Selection from breeds (dependent on the selected animal type).
+Gender: 'male' / 'female'.
+Birth Year: Year range or specific year.
+Color (Coat): Selection from popular options.
+Purpose: Selection from 'breeding', 'dairy', etc.
+Price: Minimum and maximum price range.
+Presence of Photos/Videos/Documents: Checkboxes.
+Sorting: By date (newest/oldest), price (ascending/descending), popularity (by views).
+Pagination: Dividing search results into pages with navigation by page numbers and display of total pages/listings.
+Value: Precise and fast search, allowing buyers to save time and find the most relevant offers.
+Technical Implementation:
+React: Dynamically builds the filter interface, sends AJAX requests to FastAPI when filters or page change. Updates the listing list without a full page reload.
+FastAPI: Processes search requests, constructs complex SQL queries to the animals table (with JOINs to animal_photos, regions, cities, animal_types, breeds), applies filters and sorting, implements pagination logic. Returns a list of listings and metadata (total count, page count).
+2.3. Listing View (Detail Page):
+
+User Scenario: A buyer clicks on a listing in the search results.
+Information Display: All information uploaded by the seller is displayed: title, full description, all photos (gallery/slider), all videos (embedded player), available documents (buttons for viewing/downloading).
+Seller Contact Information: Phone, seller's email (may be hidden for unregistered users).
+Interaction Buttons:
+"Send Message": Opens a chat with the seller (or starts a new one if no chat exists).
+"Add to Favorites": (For authorized users).
+"Share": Icons for social media/messengers, "Copy Link" button.
+"Report": Opens a form for submitting a complaint about the listing.
+Value: Provides the buyer with complete information for decision-making and convenient ways to contact the seller.
+Technical Implementation:
+React: Renders the page using data received from FastAPI. Integrates photo/video players, forms for complaints.
+FastAPI: Provides an API endpoint for retrieving full listing information by ID, increments views_count, checks listing status before display.
+3. Services and Specialists Catalog
+A separate but integrated section for offering livestock-related services.
+
+3.1. Service Listing Submission:
+User Scenario: A registered user wants to offer their services (e.g., they are a veterinarian or offer meat processing). Navigates to "Personal Account" -> "My Listings" -> "Submit New Service Listing."
+Creation Form: Similar to the animal listing form but adapted for services.
+Service Type: Selection from a list (service_types): "Inseminator", "Veterinarian (Inspection)", "Veterinarian (Treatment)", "Meat Processing", "Processed Meat Delivery", "Livestock Transport", "Feed Supplier", "Equipment Supplier", "Consultant", etc.
+Title: E.g., "Mobile Veterinary Services."
+Description: Detailed description of the service, experience, qualifications, licenses (if required).
+Pricing Information: A text field to describe pricing ("from 1000 KGS", "negotiable", "price list upon request").
+Contact Information: Option to specify a dedicated phone number or email for the service if different from the main profile.
+Service Geography: Regions and cities where the service is provided.
+Photos/Videos: Examples of work, equipment photos, certificates.
+Moderation: Similar to animal listings.
+3.2. Service Search and Viewing:
+User Scenario: A user searches for a veterinarian or inseminator. Navigates to the "Services" page.
+Filters: By service type, region, city.
+Service Page: Displays full information about the service, contacts, photos/videos, "Send Message", "Share", "Report" buttons.
+Value: Creation of a unified database of specialists and services, simplifying the search for necessary services for farmers.
+Technical Implementation: Analogous to working with animals, using the services and service_types tables.
+4. Interaction and Communication
+4.1. Internal Chat:
+
+User Scenario: On a listing/service page, the user clicks "Send Message." A chat window opens.
+Functionality:
+Dialogue List: In the personal account, there's a "Messages" section with a list of all active chats, sorted by the date of the last message. Unread chats are highlighted.
+Dialogue Window: Displays the conversation history. An input field for new messages, a send button.
+Link to Listing/Service: The chat can display a thumbnail of the animal or service listing that the conversation is about.
+Notifications: Pop-up notifications in the browser and/or on mobile devices for new messages.
+Value: Direct and secure communication without exchanging personal contacts in the initial stage, increasing privacy and trust.
+Technical Implementation:
+FastAPI: API endpoints for creating chats, retrieving message history, sending new messages, marking messages as read. Potentially uses WebSockets for real-time message exchange to ensure instant delivery.
+React: A chat component that connects to the WebSocket API, renders messages, and sends user input.
+4.2. Review and Rating System:
+
+User Scenario: After a transaction or service completion, a user can leave a review for another user.
+Functionality:
+Review Form: Rating (stars from 1 to 5), a text field for comments.
+Review Display: On a user's profile page or a listing/service page, the overall rating and all submitted reviews can be viewed.
+Reply to Review: Ability for the reviewed user to respond to a received review.
+Value: Building user reputation, increasing trust and transparency in the market, encouraging good behavior.
+Technical Implementation:
+FastAPI: API for creating and reading reviews. Calculation of average user ratings.
+React: Components for displaying ratings and review forms.
+4.3. Notification System:
+
+User Scenario: A user receives important information about their activity on the platform.
+Functionality:
+In-platform Notifications: Displayed in the personal account, possibly with a bell icon in the header showing the number of unread notifications.
+Email Notifications: Optionally for new messages, listing status changes, new reviews, new listings matching saved searches.
+Mobile Push Notifications (future prospect): If a mobile application is developed.
+Value: Informing users about important events, retaining them on the platform.
+Technical Implementation:
+FastAPI: Saves notifications to the notifications table, triggers email notification sending via background tasks.
+5. Content and Analytics
+This block enriches the platform with useful information and helps understand user needs.
+
+5.1. Farmer's Blog / Logbook:
+
+Purpose: A section with informative articles.
+Functionality:
+Articles: Publications on animal husbandry methods, feeding, breeding; veterinary advice; industry news; information on subsidies; artificial insemination technologies.
+Categories: Articles are organized by categories (data from blog_categories).
+Blog Search: Search by keywords.
+Article Comments: Ability to comment on articles (if required).
+Value: Enhancing the platform's expertise, attracting traffic, providing valuable information for farmers.
+Technical Implementation: blog_posts and blog_categories tables. FastAPI provides API for articles, React for their display.
+5.2. Market Statistics:
+
+Purpose: Analytical data on the livestock market.
+Functionality:
+Price Charts: Dynamics of average prices for various animal types/breeds in different regions.
+Supply/Demand: Statistics on the number of active listings by category.
+Popular Searches: Based on search_queries_log.
+Value: Helps farmers make informed decisions about buying/selling, plan their activities.
+Technical Implementation: FastAPI aggregates data from animals and search_queries_log. React visualizes data using charting libraries (e.g., Chart.js or Recharts).
+5.3. Educational Materials:
+
+Purpose: Additional resources to enhance knowledge in animal husbandry.
+Functionality: Online guides, video tutorials, announcements of courses and seminars.
+Value: Educational function, strengthening the community.
+Technical Implementation: Can be part of the blog or a separate category.
+5.4. Saved Searches and New Listing Alerts:
+
+User Scenario: A user searches for a specific animal but doesn't find a suitable one. They save their search parameters.
+Functionality:
+"Save Search" button on the search results page.
+Option to choose notification frequency (daily, weekly, instant) when new listings matching the saved criteria appear.
+Management of saved searches in the personal account.
+Value: Active user retention, turning passive visitors into active buyers even if there's no suitable offer currently.
+Technical Implementation: saved_searches table. FastAPI regularly (via cron jobs) runs a script that checks for new listings matching saved searches and sends notifications.
+6. Monetization and Promotion (Paid Services)
+The platform's revenue model.
+
+6.1. User Balance:
+Functionality: A virtual account for the user on the platform.
+Top-up: Integration with payment gateways (e.g., local payment systems in Kyrgyzstan, or international ones like Stripe) for topping up the balance via bank cards or e-wallets. Transactions are recorded in transactions.
+6.2. Listing Promotion:
+Promotion Types:
+"Top Listing": Pinning a listing to the top of search results for a specified period.
+"Highlighting": Visually highlighting a listing in the catalog (e.g., with a different color or border).
+"Bump Up": Moving a listing back to the top of the list (works as a one-time service).
+Option Selection: The user selects the promotion type and duration, views the cost, and confirms the debit from their balance.
+Value: Additional revenue for the platform, increased visibility for sellers, which boosts their chances of a quick sale.
+Technical Implementation: ad_promotion_types and ad_promotion_instances tables. FastAPI processes promotion requests, checks the balance, debits funds, creates records in ad_promotion_instances and transactions.
+7. Administration and Security
+Crucial functions for maintaining order and trust on the platform.
+
+7.1. Complaint (Report) System:
+
+User Scenario: A user encounters a listing or behavior that violates platform rules.
+Functionality: "Report" button on listings, profiles, in chats. Opens a form to select the reason for the complaint (spam, fraud, outdated, offensive content, etc.) and a text description.
+Value: Community self-regulation, identification of unfair users/content.
+Technical Implementation: reports table. FastAPI receives complaints and notifies moderators.
+7.2. Admin / Moderation Panel:
+
+Access: Only for platform staff with appropriate permissions.
+Functionality:
+User Management: Viewing, blocking/unblocking accounts, resetting passwords.
+Listing Management: Viewing all listings (including inactive, under moderation), changing statuses (approve, reject, hide), editing (if necessary).
+Complaint Review and Resolution: Handling records from the reports table.
+Moderation Logs: Viewing all administrator actions (moderation_logs).
+System Settings Management: Modifying parameters from system_settings (e.g., promotion costs).
+Reference Data Management: Adding/editing regions, cities, animal types, breeds, service types, blog categories.
+Static Page Content Management: Editing "About Us," "Terms and Conditions," etc. pages.
+User Activity Log Review: For auditing and debugging.
+IP Blacklist Management: Adding/removing IP addresses for blocking.
+Value: Ensuring security, content quality, rule compliance, prompt problem resolution.
+Technical Implementation:
+FastAPI: Provides a separate set of secured API endpoints for the administration panel, access to which is restricted by roles/permissions.
+React: A separate client application (or section) for the admin panel, using these APIs.
+7.3. IP Blacklist:
+
+Purpose: Automatic or manual blocking of access from suspicious IP addresses.
+Functionality: Adding IP addresses to ip_blacklist. FastAPI checks incoming requests against the blacklist.
+Value: Combating spam, DDoS attacks, fraud.
+7.4. User Activity Log:
+
+Purpose: Recording key user actions on the platform (login, listing creation, message sending).
+Value: A tool for auditing, debugging, and incident investigation.
+Technical Implementation: Background logging to the user_activity_logs table.
+8. Overall Structure, Navigation, and Technologies
+8.1. Intuitive User Interface and Navigation:
+Clean, modern design.
+Logical menu structure, categories, filters.
+Pagination: Clear page numbering in catalogs and search results, displaying the total number of items.
+Breadcrumbs for easy navigation.
+8.2. Multilingual Support:
+Full support for the interface and content in Russian, Kyrgyz, and potentially English. Users can easily switch languages.
+8.3. Main Pages (User-Facing Frontend):
+Homepage (/): Showcase of new, popular, promoted listings, quick access to main animal and service categories, blog announcements, news.
+Animal Category Pages (/animals/{type_slug}): Lists of listings with filters for a specific animal type.
+Listing Detail Page (/animals/{id}): Full information about an animal.
+Service Pages (/services, /services/{type_slug}): Service catalog, individual service pages.
+Personal Account Pages (/profile, /profile/my-ads, /profile/favorites, /profile/balance, /profile/settings): Central user hub.
+Chat Pages (/chat, /chat/{chat_id}): Messaging interface.
+Blog Pages (/blog, /blog/{category_slug}, /blog/{post_slug}): Content sections.
+Static Pages (/about-us, /terms, /faq): Informational pages.
+Login/Registration, Password Recovery Pages.
+Error Pages (/404, /500).
+8.4. Technology Stack:
+Backend: FastAPI (Python). Provides a high-performance, asynchronous API. Uses SQLAlchemy for database interaction, Pydantic for data validation. Manages business logic, authentication/authorization, background tasks.
+Frontend: React (JavaScript). For building interactive and dynamic user interfaces. Uses a component-based approach, libraries for routing (React Router), state management (Redux/Zustand), API requests (Axios/Fetch), UI components (Material-UI/Ant Design/Chakra UI).
+Database: PostgreSQL / MySQL. A relational database for reliable storage of structured data.
+File Storage: Object storage (e.g., AWS S3, Google Cloud Storage) for storing photos, videos, and documents, with URL generation for access.
+Email/SMS Services: For verification and notifications.
+
+Payment Gateway: Integration with local or international payment systems.
