@@ -4,6 +4,7 @@ import ws from "ws";
 import * as schema from "../../shared/schema";
 import { eq } from 'drizzle-orm';
 import { config } from 'dotenv';
+import bcrypt from 'bcrypt';
 
 // Загружаем переменные окружения из .env файла
 config({ override: true });
