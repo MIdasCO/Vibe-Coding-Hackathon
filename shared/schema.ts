@@ -282,13 +282,48 @@ export const transactionRelations = relations(transactions, ({ one }) => ({
 }));
 
 // Insert schemas
-export const insertUserSchema = createInsertSchema(users).omit({
+export const insertUserSchema = createInsertSchema(users, {
+  email: z.string().email(),
+  password: z.string().min(6),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  phone: z.string().optional(),
+  regionId: z.number().optional(),
+  cityId: z.number().optional(),
+  isVerified: z.boolean().default(false),
+  isAdmin: z.boolean().default(false),
+  verificationToken: z.string().optional(),
+  balance: z.string().default("0.00"),
+}).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export const insertAnimalSchema = createInsertSchema(animals).omit({
+export const insertAnimalSchema = createInsertSchema(animals, {
+  title: z.string().min(1),
+  description: z.string().optional(),
+  category: z.enum(['livestock', 'pets']).default('livestock'),
+  animalTypeId: z.number(),
+  breedId: z.number().optional(),
+  gender: z.enum(['male', 'female']),
+  birthYear: z.number().optional(),
+  color: z.string().optional(),
+  weight: z.string().optional(),
+  purpose: z.enum(['breeding', 'dairy', 'meat', 'reproduction']).optional(),
+  price: z.string(),
+  isNegotiable: z.boolean().default(false),
+  regionId: z.number(),
+  cityId: z.number(),
+  address: z.string(),
+  homeDelivery: z.boolean().default(false),
+  pickup: z.boolean().default(false),
+  butchered: z.boolean().default(false),
+  vaccinated: z.boolean().default(false),
+  certified: z.boolean().default(false),
+  organicFeed: z.boolean().default(false),
+  status: z.enum(['pending', 'active', 'inactive', 'sold', 'rejected']).default('pending'),
+}).omit({
   id: true,
   userId: true,
   viewCount: true,
@@ -298,17 +333,32 @@ export const insertAnimalSchema = createInsertSchema(animals).omit({
   updatedAt: true,
 });
 
-export const insertAnimalPhotoSchema = createInsertSchema(animalPhotos).omit({
+export const insertAnimalPhotoSchema = createInsertSchema(animalPhotos, {
+  animalId: z.number(),
+  fileName: z.string(),
+  filePath: z.string(),
+  isMain: z.boolean().default(false),
+  order: z.number().default(0),
+}).omit({
   id: true,
   createdAt: true,
 });
 
-export const insertMessageSchema = createInsertSchema(messages).omit({
+export const insertMessageSchema = createInsertSchema(messages, {
+  fromUserId: z.number(),
+  toUserId: z.number(),
+  animalId: z.number().optional(),
+  content: z.string().min(1),
+  isRead: z.boolean().default(false),
+}).omit({
   id: true,
   createdAt: true,
 });
 
-export const insertFavoriteSchema = createInsertSchema(favorites).omit({
+export const insertFavoriteSchema = createInsertSchema(favorites, {
+  userId: z.number(),
+  animalId: z.number(),
+}).omit({
   id: true,
   createdAt: true,
 });
