@@ -78,7 +78,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.post('/api/auth/register', async (req: Request, res: Response) => {
     try {
-      const userData = insertUserSchema.parse(req.body);
+      const { email, password, ...rest } = req.body as { email: string; password: string; [key: string]: any };
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+      }
+
+      const userData = insertUserSchema.parse({ email, password, ...rest });
       
       // Check if user already exists
       const existingUser = await storage.getUserByEmail(userData.email);
@@ -93,9 +99,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const verificationToken = jwt.sign({ email: userData.email }, JWT_SECRET, { expiresIn: '1d' });
 
       const user = await storage.createUser({
-        ...userData,
+        email: userData.email,
         password: hashedPassword,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        phone: userData.phone,
+        regionId: userData.regionId,
+        cityId: userData.cityId,
         verificationToken,
+        isVerified: false,
+        isAdmin: false,
+        balance: "0.00"
       });
 
       // Generate JWT token
@@ -569,12 +583,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Message routes
   app.post('/api/messages', authenticateToken, async (req: any, res) => {
     try {
-      const messageData = insertMessageSchema.parse({
-        ...req.body,
-        fromUserId: req.user.userId,
-        toUserId: parseInt(req.body.toUserId),
-        animalId: req.body.animalId ? parseInt(req.body.animalId) : null,
-      });
+      const { content, toUserId, animalId } = req.body;
+      const fromUserId = req.user.userId;
+
+      const messageData = {
+        content,
+        fromUserId,
+        toUserId: parseInt(toUserId),
+        animalId: animalId ? parseInt(animalId) : undefined,
+        isRead: false
+      };
 
       const message = await storage.createMessage(messageData);
       res.status(201).json(message);
@@ -788,17 +806,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send a new message
   app.post('/api/messages', authenticateToken, async (req: any, res) => {
     try {
-      const { content, toUserId } = req.body;
+      const { content, toUserId, animalId } = req.body;
       const fromUserId = req.user.userId;
 
-      const message = await storage.createMessage({
+      const messageData = {
         content,
         fromUserId,
-        toUserId,
-        isRead: false,
-        createdAt: new Date(),
-      });
+        toUserId: parseInt(toUserId),
+        animalId: animalId ? parseInt(animalId) : undefined,
+        isRead: false
+      };
 
+      const message = await storage.createMessage(messageData);
       res.status(201).json(message);
     } catch (error) {
       console.error('Send message error:', error);
@@ -860,8 +879,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await db.insert(breeds).values(breedData).onConflictDoNothing();
 
       res.json({ message: 'Reference data seeded successfully!' });
-    } catch (e) {
-      res.status(500).json({ message: 'Error seeding reference data', error: e.message });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      res.status(500).json({ message: 'Error seeding reference data', error: errorMessage });
     }
   });
 
@@ -900,7 +920,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Animal not found' });
       }
 
-      const updatedAnimal = await storage.updateAnimal(id, { status });
+      const updatedAnimal = await storage.updateAnimal(id, { 
+        status: status as 'active' | 'rejected'
+      });
       res.json(updatedAnimal);
     } catch (error) {
       console.error('Update listing status error:', error);
@@ -955,8 +977,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 content,
                 fromUserId,
                 toUserId,
-                animalId: animalId || null,
-                createdAt: new Date(),
+                animalId: animalId || undefined,
+                isRead: false
               });
               
               // Send to sender
