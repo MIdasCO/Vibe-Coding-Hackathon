@@ -120,27 +120,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         token,
         user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, isVerified: user.isVerified }
       });
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: 'Validation error', errors: error.errors });
       }
       console.error('Registration error:', error);
-      // Log full error details
-      if (error instanceof Error) {
-        console.error('Error name:', error.name);
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-        res.status(500).json({ 
-          message: 'Internal server error', 
-          errorName: error.name, 
-          errorMessage: error.message 
-        });
-      } else {
-        res.status(500).json({ 
-          message: 'Unknown internal server error',
-          error: String(error)
-        });
-      }
+      res.status(500).json({ message: 'Internal server error' });
     }
   });
 
