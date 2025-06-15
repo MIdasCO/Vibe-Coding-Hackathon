@@ -75,8 +75,7 @@ export const animals = pgTable("animals", {
   isNegotiable: boolean("is_negotiable").default(false),
   regionId: integer("region_id").notNull(),
   cityId: integer("city_id").notNull(),
-  address: text("address").notNull(), // Обязательное поле адреса
-  // Дополнительные услуги
+  address: text("address").notNull(),
   homeDelivery: boolean("home_delivery").default(false),
   pickup: boolean("pickup").default(false),
   butchered: boolean("butchered").default(false),
@@ -299,9 +298,13 @@ export const insertAnimalSchema = createInsertSchema(animals).omit({
   updatedAt: true,
 });
 
+export const insertAnimalPhotoSchema = createInsertSchema(animalPhotos).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertMessageSchema = createInsertSchema(messages).omit({
   id: true,
-  isRead: true,
   createdAt: true,
 });
 
