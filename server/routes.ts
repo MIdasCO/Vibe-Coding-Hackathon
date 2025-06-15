@@ -50,7 +50,7 @@ const upload = multer({
 });
 
 // Middleware to verify JWT token
-const authenticateToken = (req: any, res: any, next: any) => {
+const authenticateToken = (req: Request & { user?: { userId: number } }, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -132,7 +132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/login', async (req: Request, res: Response) => {
     try {
-      const { email, password } = req.body;
+      const { email, password } = req.body as { email: string; password: string };
 
       if (!email || !password) {
         return res.status(400).json({ message: 'Email and password are required' });
@@ -586,8 +586,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Internal server error' });
     }
   });
-
-
 
   // Get user by ID
   app.get('/api/users/:userId', authenticateToken, async (req: any, res) => {
