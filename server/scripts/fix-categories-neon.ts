@@ -33,7 +33,7 @@ async function fixCategoriesNeon() {
     console.log('📝 Обновляем типы домашних животных...');
     const petsResult = await db
       .update(schema.animalTypes)
-      .set({ category: 'pets' })
+      .set({ category: 'pets' as const })
       .where(inArray(schema.animalTypes.name, petTypes));
     
     console.log(`   ✅ Обновлено типов домашних животных: ${petsResult.rowCount || 0}`);
@@ -44,7 +44,7 @@ async function fixCategoriesNeon() {
     console.log('🐄 Обновляем типы скота...');
     const livestockResult = await db
       .update(schema.animalTypes)
-      .set({ category: 'livestock' })
+      .set({ category: 'livestock' as const })
       .where(inArray(schema.animalTypes.name, livestockTypes));
     
     console.log(`   ✅ Обновлено типов скота: ${livestockResult.rowCount || 0}`);
